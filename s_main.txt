@@ -1,0 +1,194 @@
+/*
+ * main.c
+ *
+ *  Created on: 25 жовт. 2018 р.
+ *      Author: ruslan
+ */
+#include <stdio.h>
+#include <string.h>
+
+#include <math.h>
+
+#include <fcntl.h>   /* File Control Definitions           */
+#include <termios.h> /* POSIX Terminal Control Definitions */
+#include <unistd.h>  /* UNIX Standard Definitions 	   */
+#include <errno.h> /* ERROR Number Definitions           */
+#include "communication.h"
+
+request_t request;//6
+response_t  response;//7
+uint8_t in_buf[16], out_buf[16];
+
+
+int main (void)
+{
+	int comand, value, bk;//, sat
+	int fd;
+	int st;
+	unsigned char chr[16], chr3[10];// chr2=0,
+	printf ("open port \n");
+	fd=open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NONBLOCK);
+	//fcntl(fd, F_SETFL,0);
+	printf ("op=%i\n", fd);
+	/*---------- Setting the Attributes of the serial port using termios structure --------- */
+		
+	struct termios SerialPortSettings;	/* Create the structure                          */
+
+	tcgetattr(fd, &SerialPortSettings);	/* Get the current attributes of the Serial port */
+
+	//printf ("c_cc	-	 %x\n", *&SerialPortSettings.c_cc );
+//	printf ("c_cflag	-	 %x\n", SerialPortSettings.c_cflag );
+//	printf ("c_iflag	-	 %x\n", SerialPortSettings.c_iflag );
+//	printf ("c_ispeed	-	 %x\n", SerialPortSettings.c_ispeed );
+//	printf ("c_lflag	-	 %x\n", SerialPortSettings.c_lflag );
+//	printf ("c_line	-	 %x\n", SerialPortSettings.c_line );
+//	printf ("c_oflag	-	 %x\n", SerialPortSettings.c_oflag );
+//	printf ("c_ospeed	-	 %x\n\n", SerialPortSettings.c_ospeed );
+
+
+//	//SerialPortSettings.c_cc= 	0x00bf822751;
+//	SerialPortSettings.c_cflag= 0x00800008bd;//cbd
+//	SerialPortSettings.c_iflag=	0x01;//500
+//	SerialPortSettings.c_ispeed=0x0d;
+//	SerialPortSettings.c_lflag=	0x00;//8a3b
+//	SerialPortSettings.c_line=	0x00;
+//	SerialPortSettings.c_oflag=	0x00;//5
+//	SerialPortSettings.c_ospeed=0x0d;
+
+	cfsetispeed(&SerialPortSettings,B9600); /* Set Read  Speed as 9600                       */
+	cfsetospeed(&SerialPortSettings,B9600); /* Set Write Speed as 9600                       */
+
+	//SerialPortSettings.c_cflag=0;
+	SerialPortSettings.c_cflag &= ~PARENB;   /* Disables the Parity Enable bit(PARENB),So No Parity   */
+	SerialPortSettings.c_cflag &= ~CSTOPB;   /* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
+	SerialPortSettings.c_cflag &= ~CSIZE;	 /* Clears the mask for setting the data size             */
+	SerialPortSettings.c_cflag |=  CS8;      /* Set the data bits = 8                                 */
+
+	SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+	SerialPortSettings.c_cflag |= CREAD | CLOCAL; /* Enable receiver,Ignore Modem Control lines       */
+
+
+	SerialPortSettings.c_iflag |= (IXON | IXOFF | IXANY);          /*  <<<<<<<< &~ Disable XON/XOFF flow control both i/p and o/p */
+	SerialPortSettings.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);  /* Non Cannonical mode                            */
+
+	SerialPortSettings.c_oflag &= ~OPOST;/*No Output Processing*/
+	SerialPortSettings.c_cc[VMIN] = 16; /* Read at least 10 characters */
+	SerialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */ //no pause breack
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	// Input flags - Turn off input processing
+//	// convert break to null byte, no CR to NL translation,
+//	// no NL to CR translation, don't mark parity errors or breaks
+//	// no input parity check, don't strip high bit off,
+//	// no XON/XOFF software flow control
+//
+//	config.c_iflag &= ~(IGNBRK | BRKINT | ICRNL |
+//                    INLCR | PARMRK | INPCK | ISTRIP | IXON);
+//
+//	// Output flags - Turn off output processing
+//	// no CR to NL translation, no NL to CR-NL translation,
+//	// no NL to CR translation, no column 0 CR suppression,
+//	// no Ctrl-D suppression, no fill characters, no case mapping,
+//	// no local output processing
+//
+//	config.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
+//                     ONOCR | OFILL | OPOST);
+//
+//	// Turn off character processing
+//	// clear current char size mask, no parity checking,
+//	// no output processing, force 8 bit input
+//
+//	config.c_cflag &= ~(CSIZE | PARENB);
+//	config.c_cflag |= CS8;
+//
+//	// One input byte is enough to return from read()
+//	// Inter-character timer off
+//
+//	config.c_cc[VMIN]  = 2;
+//config.c_cc[VTIME] = 0;
+//	tcsetattr(com_sock, TCSAFLUSH, &config)
+//
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if((tcsetattr(fd,TCSANOW,&SerialPortSettings)) != 0) /* Set the attributes to the termios structure*/
+	{
+		printf("\n  ERROR ! in Setting attributes");
+		return 0;
+	}
+	else
+	{
+		printf("ok\n");
+	}
+
+	tcflush(fd, TCIFLUSH);
+
+//	bk= sizeof (response_t);
+//	printf ("sizeof request_t - %d", bk);
+
+	while (1)
+	{
+		printf ("input num comand -");
+		scanf ("%d", &comand);
+		printf ("input value - ");
+		scanf ("%d", &value);
+		//sizeof(request);
+//printf ("size of req -  %d", st);
+
+		request.address=0x03;
+		request.command=comand;
+		request.value=value;
+		request_to_array(&request, out_buf);
+
+		bk=write (fd, &out_buf, sizeof(request_t));
+		printf ( "%d \n", bk);
+		//sat=16;
+		//while (sat--)
+		//{
+		sleep (1);
+
+		//printf ( "val %d -", bk);
+		st=0;
+		while (st < 6)
+		{
+			//chr2=;
+			bk=read(fd, &chr[st], 1 );
+			if (bk>0)
+			{
+				printf ( " %#x", chr[st]);
+				 st++;
+			}
+
+		}
+		printf ( "\n");
+
+		array_to_request(&request, chr);
+
+		printf ("adr = %#X\n", (unsigned int)request.address );
+		printf ("com = %#X\n", (unsigned int)request.command );
+		printf ("val = %#X\n", (unsigned int)request.value );
+		if (request.crc16 == (LiczCRC2((uint8_t *)&request, sizeof(request_t) - 2)) )
+		{
+			printf ("CRC - OK\n");
+		}
+		else
+		{
+			printf ("CRC - fail\n");
+		}
+
+		//}
+		printf ("again? - ");
+		//pause();
+		scanf ("%s", &chr3 );
+
+		if (chr3[0] == 'n')
+		{
+
+			close (fd);
+			printf ( "close");
+			return 0;
+		}
+
+
+		//sleep (2);
+
+	}
+
+}

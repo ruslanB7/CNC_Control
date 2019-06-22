@@ -91,12 +91,12 @@ void mwin_init (void)
 		echochar(0x400052);
 	}
 	echochar(0x400041);
-	pltab(5,5);
-	move (1,3);
-	printw ("y=%d x=%d", my, mx);
+//	qpltab(5,5);
+//	move (1,3);
+//	printw ("y=%d x=%d", my, mx);
 	refresh();
-	ntim=time(NULL);
-	tim=localtime(&ntim);
+//	ntim=time(NULL);
+//	tim=localtime(&ntim);
 
 
 	refresh();
@@ -146,73 +146,9 @@ void wrefr (void)
     if ( fl != 0 )
 	{
 		fscanf (fl, "%s", cap);
-		move (1,mx-20);
+		move (1, 4);
 		attron(COLOR_PAIR(pair1));
 		printw ("%s%% ", cap);
-		fclose(fl);
-	}
-	else
-	{
-		//move (1,108);
-		//attron(COLOR_PAIR(pair3));
-		//printw ("%s","err");
-	}
-
-	fl = fopen( "/sys/class/power_supply/BAT0/voltage_now", "r");
-    if ( fl != 0 )
-	{
-		fscanf (fl, "%s", cap);
-		move (1,mx-28);
-		attron(COLOR_PAIR(pair1));
-		printw ("%s ", cap);
-		fclose(fl);
-	}
-	else
-	{
-		//move (1,108);
-		//attron(COLOR_PAIR(pair3));
-		//printw ("%s","err");
-	}
-
-	fl = fopen( "/sys/class/hwmon/hwmon1/pwm1", "r");
-    if ( fl != 0 )
-	{
-		fscanf (fl, "%s", cap);
-		move (4,mx-10);
-		attron(COLOR_PAIR(pair1));
-		printw ("%s ", cap);
-		fclose(fl);
-	}
-	else
-	{
-		//move (1,108);
-		//attron(COLOR_PAIR(pair3));
-		//printw ("%s","err");
-	}
-
-	fl = fopen( "/sys/class/hwmon/hwmon1/fan1_input", "r");
-    if ( fl != 0 )
-	{
-		fscanf (fl, "%s", cap);
-		move (4,mx-20);
-		attron(COLOR_PAIR(pair1));
-		printw ("%s ", cap);
-		fclose(fl);
-	}
-	else
-	{
-		//move (1,108);
-		//attron(COLOR_PAIR(pair3));
-		//printw ("%s","err");
-	}
-
-	fl = fopen( "/sys/class/hwmon/hwmon0/temp1_input", "r");
-    if ( fl != 0 )
-	{
-		fscanf (fl, "%s", cap);
-		move (5,mx-10);
-		attron(COLOR_PAIR(pair1));
-		printw ("%s ", cap);
 		fclose(fl);
 	}
 	else

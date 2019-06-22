@@ -4,6 +4,7 @@
 //#include <wchar.h>
 //#include <string.h>
 #include "face.h"
+#include "port.h"
 
 float Bm, g, Hg, U1min, U2, Kt, I1, I1ef, I2, I2ef, Le, Hm, IW, f, J, ko, Pu;
 float ScSo, Sc, So, ew, w1, w2;
